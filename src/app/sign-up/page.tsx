@@ -1,114 +1,170 @@
 'use client'
 import React, { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link';
-import { createUserApi } from '../../../utils/api/user';
+import { createUser } from '../../../utils/api/signup'
+import { useRouter } from "next/navigation";
 
-export default function signUp() {
-    const [profile, setProfile] = useState<File | null>(null);
-    const [password, setPassword] = useState("");
-    const hasMinLength = password.length >= 8;
-    const hasSpecial = /[!@#$%^&*]/.test(password);
-    return (
+export default function SignUp() {
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [location, setLocation] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-        <div className='flex flex-row min-h-screen justify'>
-            <div className='flex lg:flex-row md:flex-col  w-full'>
-                <div className='md:mt-14 lg:mt-5'><Image src={'/nbims.png'} height={100} width={100} alt='logo' /></div>
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0])
+    }
+  }
+  const router = useRouter();
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault()
+  
+    const data = new FormData()
+    data.append('fullName', fullName)
+    data.append('email', email)
+    data.append('role', role)
+    data.append('phone', phone)
+    data.append('password',password)
+    data.append('passwordConfirm', confirmPassword)
+    data.append('location', location)
+    if (selectedFile) {
+      data.append('profile', selectedFile)
+    }
+  
+    try {
+      const res = await createUser(data)
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("email", res.user.email);
+      localStorage.setItem("email", res.user.fullName);
+      localStorage.setItem("role", res?.role);
+      router.push("/dashboard");
+      console.log('User created:', res)
+      // maybe redirect or show success message
+    } catch (error) {
+      console.error('Signup failed:', error)
+    }
+  }
 
-                <div className='lg:px-8 lg:py-28 md:px-6 md:py-15 '>
-                    <h2 className='font-bold'>let's get you started </h2>
-
-                    <form action="POST">
-                        <div className='flex flex-col gap-10'>
-                            <label htmlFor=""> Full Name
-                                <div className='border rounded-sm  h-[40px] sm:w-[280px] md:w-[360px] lg:w-[430px]'>
-                                    <input type="text" className=' h-full w-full hover:outline-0 p-1' />
-                                </div>
-                            </label>
-                            <label htmlFor=""> Email
-                                <div className='border rounded-sm  h-[40px] sm:w-[280px] md:w-[360px] lg:w-[430px]'>
-                                    <input type="text" className=' h-full w-full hover:outline-0 p-1' />
-                                </div>
-                            </label>
-                            <label htmlFor=""> Role
-                                <div className='border rounded-sm  h-[40px] sm:w-[280px] md:w-[360px] lg:w-[430px]   '>
-                                    <select className=' h-full w-full hover:outline-0'>
-                                        <option value="manage" className='text-black'>Manager</option>
-                                        <option value="warehouseStaff" className='text-black'>warehouse Staff</option>
-                                        <option value="admin" className='text-black'> Admin</option>
-
-                                    </select>
-                                </div>
-                            </label>
-                            <label htmlFor=""> Phone number
-                                <div className='border rounded-sm  h-[40px] sm:w-[280px] md:w-[360px] lg:w-[430px]'>
-                                    <input type="text" className=' lg:h-full w-full hover:outline-0 p-1' />
-                                </div>
-                            </label>
-                        </div>
-
-                        <label
-                            htmlFor="file-upload"
-                            className="flex items-center justify-between cursor-pointer mt-5  p-3"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Image
-                                    src={'/Frame 3957.png'}
-                                    alt="Upload"
-                                    width={56}
-                                    height={56}
-                                />
-                                {profile && <p className="text-white mt-2">File selected: {profile.name}</p> || <div className="flex flex-col">
-                                    <span className="text-white font-medium">Upload Logo</span>
-                                    <span > <p className="text-sm text-white mt-1"> Supported files (DOC, PDF, JPG or MP4)</p></span>
-
-                                </div>}
-
-                            </div>
-                            <button className="bg-[#D3D3D3] text-black p-3 rounded-full">
-                                Browse
-                            </button>
-
-                        </label>
-
-                        <label htmlFor=""> Password
-                            <div className='border rounded-sm focus:border-none mt-5 h-[40px] sm:w-[280px] md:w-[360px] p-1 lg:w-[430px]'>
-                                <input type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)} className=' lg:h-full w-full hover:outline-0' placeholder='please enter password' />
-                            </div>
-                        </label>
-                        <p className={hasMinLength ? "text-green-600" : "text-gray-500"}>password must contain a minimum of 8 characters</p>
-                        <p  className={hasSpecial ? "text-green-600" : "text-gray-500"}>password must containat least one symbol e.g. @,!</p>
-
-                        
-                                <div className='border rounded-sm  mt-5 h-[40px] sm:w-[280px] md:w-[360px] lg:w-[430px]   '>
-                                    <select className=' h-full w-full hover:outline-0'>
-                                    <option className='text-black'>Select your branch</option>
-                                        <option value="manage" className='text-black'>Mile 17</option>
-                                        <option value="st-claire" className='text-black'>St claire</option>
-                                        <option value="clerks-quarters" className='text-black'>Clerks Quarters</option>
-                                        <option value="campaigne-street" className='text-black'>Campaigne Street</option>
-                                    </select>
-                                </div>
-                           
-                    </form>
-
-                    <button className=' mt-5 sm:w-[280px] md:w-[360px] lg:w-[430px] bg-red-700 border p-2 '>
-                        Sign Up
-                    </button>
-                   
-                   <p className='flex justify-center mt-8'>Already a user? <Link href={''}>login</Link></p>
-                </div>
+  return (
+    <div className='w-full min-h-screen flex'>
+        
+        <div className='flex w-full ' >
+          <div>
+            <Image src={'/NBIMS.png'} width={150} height={150} alt='logo'/>
             </div>
-            <div className="bg-white w-full flex justify-center min-h-screen">
-                <div className="flex flex-col items-center justify-center">
-                    <Image src="/nbims.png" height={230} width={230} alt="logo" />
-                </div>
-            </div>
-                
+            <div className='flex items-center mt-10 px-24'>
+                <form onSubmit={handleSubmit} className='flex flex-col gap-7 justify-center'>
+                <div className='gap-5  flex flex-col justify-center' >
+        <label className="block text-sm font-medium text-white ">Full name</label>
+        <input 
+          type="fullName" 
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          className="w-[474px] h-[36px] px-4  border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+          placeholder="enter your full names"
+        />
+      </div>
+                <div className='gap-5  flex flex-col justify-center' >
+        <label className="block text-sm font-medium text-white ">Email</label>
+        <input 
+          type="email" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-[474px] h-[36px] px-4  border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+          placeholder="enter your email"
+        />
+      </div>
+      <div >
+        <label className="block text-sm font-medium text-white mb-1">Role</label>
+        <select value={role}  onChange={(e) => setRole(e.target.value)} className='w-[474px] h-[36px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all'>
+            <option value="" className=' text-black'>Select a role </option>
+            <option value="admin" className=' text-black'>admin </option>
+            <option value="warehouse-staff" className=' text-black'>warehouse staff</option>
+            <option value="manager" className=' text-black'>manager </option>
+            
+        </select>
+      </div>
 
+      <div className='' >
+        <label className="block text-sm font-medium text-whit mb-1">phone number</label>
+        <input 
+          type="phone" 
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="w-[474px] h-[36px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+          placeholder="phone number"
+        />
+      </div>
+      <div className="">
+    <label className="w-full flex flex-row gap-5 items-center px-4 py-6  text-blue cursor-pointer">
+        
+        <Image src={'/frame.png'} width={92} height={92} alt='frame'/>
+        <span className="mt-2 "><p className='font-bold'>Upload profile</p><p>Supported files (JPEG, SVG, PNG)</p></span>
+        
+        <button type='button' className='w-[94px] h-[52px] text-black rounded-2xl bg-[#D3D3D3]'>
+          Browse
+        </button>
+        <input onChange={handleFileChange} type='file' className='flex'  />
+    </label>
+</div>
+
+<div className='' >
+        <label className="block text-sm font-medium text-whit mb-1">Password</label>
+        <input 
+          type="Password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-[474px] h-[36px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+          required
+        />
+        <span>
+          <p>Password must contain a minimum of 8 characters</p>
+          <p>Password must contain at least one symbol e.g. @, !</p>
+        </span>
+      </div>
+      <div className='' >
+        <label className="block text-sm font-medium text-whit mb-1">Password</label>
+        <input 
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-[474px] h-[36px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+          placeholder="your@email.com"
+        />
+      </div>
+
+      <div >
+        <label className="block text-sm font-medium text-white mb-1">Role</label>
+        <select  value={location}
+                onChange={(e) => setLocation(e.target.value)} className='w-[474px] h-[36px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all'>
+            <option value="" className=' text-black'> Choose location </option>
+            <option value="mile17" className=' text-black'>mile 17 </option>
+            <option value="stClaire" className=' text-black'>st claire</option>
+            <option value="clerksQuarter" className=' text-black'>clerks Quarter</option>
+            
+        </select>
+      </div>
+
+<button type='submit' className="w-[400px] h-[48px] bg-[#DB3E36]  text-white font-medium py-2.5 rounded-lg transition-colors">
+       login
+      </button>
+
+
+
+                </form>
+            </div>
         </div>
-    )
-}
 
+        <div></div>
+        <div className='bg-white min-h-screen w-full flex items-center justify-center'>
+          <div>
+            <Image src={'/NBIMS.png'} width={400} height={400} alt='nbims' />
+          </div>
+        </div>
+    </div>
+  )
+}
