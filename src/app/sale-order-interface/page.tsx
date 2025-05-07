@@ -1,19 +1,35 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image'
+import Image from 'next/image';
 import { getProducts } from '../../../utils/api/product';
 import { createSale } from '../../../utils/api/sales-order';
 
 export default function SalesOrder() {
-    const [products, setProducts] = useState([]);
     const [selectedSku, setSelectedSku] = useState('');
+   
+     const [name, setName] = useState('');
+     const [price, setPrice] = useState<number>();
+    const [category, setCategory] = useState('');
     const [quantity, setQuantity] = useState(1);
     const [customerId, setCustomerId] = useState('');
+
+    interface Product {
+        id: string;
+        sku: string;
+        price: number;
+        imageUrl: string;
+        name: string;
+        category: string;
+        quantity: number;
+    }
+
+    const [products, setProducts] = useState<Product[]>([]);
 
     useEffect(() => {
         const fetchProducts = async () => {
             const data = await getProducts();
-            setProducts(data);
+            console.log('Fetched Products:', data); // Debugging
+            setProducts(Array.isArray(data.products) ? data.products : []);
         };
         fetchProducts();
     }, []);
@@ -22,23 +38,36 @@ export default function SalesOrder() {
         e.preventDefault();
         const order = {
             customerId,
-            items: [{ sku: selectedSku, quantity: parseInt(quantity.toString(), 10) }],
+            price,
+            items: [
+                {
+                    name: name, // Use the name from state
+                    sku: selectedSku,
+                    quantity: parseInt(quantity.toString(), 10),
+                    category: category 
+                },
+            ],
         };
 
-        const res = await createSale(order)
-        
+        try {
+            const res = await createSale(order);
+            console.log('Order created:', res);
+        } catch (error) {
+            console.error('Error creating order:', error);
+        }
     };
 
     return (
-        <div className=' w-full min-h-screen flex justify-center items-center'>
+        <div className="w-full min-h-screen flex justify-center items-center">
+            <div className="w-[600px] h-[500px] bg-white rounded-lg text-black">
+                <Image src={'/NBIMS.png'} width={150} height={150} alt="log" />
 
-            <div className='w-[600px] h-[500px] bg-white rounded-lg text-black'>
+                <p className="font-bold text-2xl">Please May I Have Your Order</p>
 
-                <Image src={'/NBIMS.png'} width={150} height={150} alt='log' />
-
-                <p className=' font-bold text-2xl'>Please May i have you order</p>
-
-                <form onSubmit={handleSubmit} className="p-6 bg-white rounded-lg shadow-md w-full max-w-md mx-auto">
+                <form
+                    onSubmit={handleSubmit}
+                    className="p-6 bg-white rounded-lg shadow-md w-full max-w-md mx-auto"
+                >
                     <h2 className="text-xl font-bold mb-4">Place Sales Order</h2>
 
                     <input
@@ -52,16 +81,31 @@ export default function SalesOrder() {
 
                     <select
                         value={selectedSku}
-                        onChange={(e) => setSelectedSku(e.target.value)}
+                        onChange={(e) => {
+                            const selectedSku = e.target.value;
+                            setSelectedSku(selectedSku);
+
+                            const selectedProduct = products.find(
+                                (product) => product.sku === selectedSku
+                            );
+                            if (selectedProduct) {
+                                setName(selectedProduct.name);
+                                setCategory(selectedProduct.category)
+                                setPrice(selectedProduct.price)
+
+                            }
+                        }}
                         className="w-full mb-4 p-2 border rounded"
                         required
                     >
+                       
                         <option value="">Select Product</option>
-                        {products.map((product: any) => (
-                            <option key={product.sku} value={product.sku}>
-                                {product.name}
-                            </option>
-                        ))}
+                        {Array.isArray(products) &&
+                            products.map((product) => (
+                                <option key={product.sku} value={product.sku}>
+                                    {product.name}
+                                </option>
+                            ))}
                     </select>
 
                     <div className="mb-4">
@@ -85,7 +129,6 @@ export default function SalesOrder() {
                         </div>
                     </div>
 
-
                     <button
                         type="submit"
                         className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
@@ -93,9 +136,7 @@ export default function SalesOrder() {
                         Submit Order
                     </button>
                 </form>
-
             </div>
-
         </div>
-    )
+    );
 }

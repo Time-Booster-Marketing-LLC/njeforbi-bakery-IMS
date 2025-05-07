@@ -4,7 +4,6 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
-import Image from 'next/image';
 import CustomTabPanel from '../tab/product-creation-tab'
 
 const style = {
@@ -26,7 +25,7 @@ interface productModalProps {
   description?: string;
 }
 
-export default function BroductModal({ open, onClose, title, description }: productModalProps) {
+export default function productModal({ open, onClose, title, description }: productModalProps) {
 
   return (
     <Modal

@@ -19,3 +19,15 @@ export const getProducts = async () => {
       throw new Error("Could not fetch details");
     }
   };
+
+  export const getLowProducts = async () => {
+    try {
+      const response = await api.get(
+        `products/low-stock`
+      );
+      return response.data;
+    } catch (error) {
+      console.error(Response.error);
+      throw new Error("Could not fetch details");
+    }
+  };

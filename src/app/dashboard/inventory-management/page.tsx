@@ -1,19 +1,66 @@
 'use client'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Header from '../../../../compnents/ui/header'
 import Siderbar from '../../../../compnents/ui/siderbar'
 import 'react-circular-progressbar/dist/styles.css';
 import Image from 'next/image'
 import BasicModal from '../../../../compnents/modals/delete-item-modal'
 import ProductModal from '../../../../compnents/modals/product-creation-modal';
+import { getLowProducts, getProducts } from '../../../../utils/api/product';
+
 
 export default function Dashboard() {
+
+  interface Product {
+    name: string;
+    category: string;
+    quantity: number;
+    price: number;
+    status: string;
+  }
+  
+  const [products, setProducts] = React.useState<Product[]>([])
+  
   const [open, setOpen] = React.useState(false);
+  const [low, setLow]= useState<string>()
+  const [stockCounts, setStockCounts] = React.useState<number>()
+  const perishableCategories = ['Fruits', 'Vegetables', 'Dairy', 'Meat', 'Seafood', 'Beverages']
+  const [perishableCount, setPerishableCount] = useState()
+  useEffect(()=>{
+    const fetchData = async ()=>{
+       const response = await getLowProducts();
+            const products = response.products[0];
+            setLow(products.name) 
+            
+          
+    }
+
+    fetchData()
+  }, [])
+
+   React.useEffect(() => {
+      const fetchData = async () => {
+        const response = await getProducts()
+        const products = response.products
+        const count = response.total
+        setStockCounts(count)
+        setProducts(products)
+        const perishables = products.filter((p: any) =>
+          perishableCategories.includes(p.category)
+        );
+        setPerishableCount(perishables.length);
+       
+      }
+  
+      fetchData()
+    }, [])
+  
+
   const cardData = [
-    { title: 'Total Stock', content: 'This is the first card' },
+    { title: 'Total Stock', content: stockCounts },
     { title: 'Pending Orders', content: 'This is the second card' },
-    { title: 'Overall Perisdhables', content: 'This is the third card' },
-    { title: 'Running Low', content: 'This is the fourth card' },
+    { title: 'Overall Perisdhables', content: perishableCount},
+    { title: 'Running Low', content: low },
   ];
 
   const percentage = 66;
@@ -21,12 +68,15 @@ export default function Dashboard() {
   const handleClose = () => {setOpen(false)}
   const handleProductOpen = () =>{ setOpen(true);}
   const handleProductClose = () => {setOpen(false)}
-  const inventory = [
-    { id: 1, name: 'Laptop', category: 'Electronics', stock: 12, price: 850, status: 'In Stock' },
-    { id: 2, name: 'Desk Chair', category: 'Furniture', stock: 0, price: 120, status: 'Out of Stock' },
-    { id: 3, name: 'Keyboard', category: 'Electronics', stock: 34, price: 25, status: 'In Stock' },
-    { id: 4, name: 'Notebook', category: 'Stationery', stock: 100, price: 3, status: 'In Stock' },
-  ];
+  
+  const inventory = products.map((product:any, index: number) => ({
+    id: index + 1,
+    name: product.name,
+    category: product.category,
+    stock: product.quantity,
+    price: product.price,
+    status: product.status,
+  }));
   
   
 
@@ -84,27 +134,27 @@ export default function Dashboard() {
           </tr>
         </thead>
         <tbody>
-          {inventory.map((item, index) => (
-            <tr key={item.id} className="border-b">
-              <td className="py-2 px-4">{index + 1}</td>
-              <td className="py-2 px-4">{item.name}</td>
-              <td className="py-2 px-4">{item.category}</td>
-              <td className="py-2 px-4">{item.stock}</td>
-              <td className="py-2 px-4">${item.price}</td>
-              <td className="py-2 px-4 gap-10 flex">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  item.status === 'In Stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {item.status}
-                </span>
-                <span className='flex gap-3'>
-                  <button  onClick={handleOpen}><Image src={'/Bin Icon.png'} width={20} height={20} alt='bin' /></button>
-                  <button><Image src={'/Pencil Icon.png'} width={20} height={20} alt='bin' /></button>
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+  {products.map((item: any, index:number) => (
+    <tr key={index} className="border-b">
+      <td className="py-2 px-4">{index + 1}</td>
+      <td className="py-2 px-4">{item.name}</td>
+      <td className="py-2 px-4">{item.category}</td>
+      <td className="py-2 px-4">{item.quantity}</td>
+      <td className="py-2 px-4">${item.price}</td>
+      <td className="py-2 px-4 gap-10 flex">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          item.status === 'In Stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {item.status}
+        </span>
+        <span className='flex gap-3'>
+          <button onClick={handleOpen}><Image src={'/Bin Icon.png'} width={20} height={20} alt='bin' /></button>
+          <button><Image src={'/Pencil Icon.png'} width={20} height={20} alt='edit' /></button>
+        </span>
+      </td>
+    </tr>
+  ))}
+</tbody>
       </table>
     </div>
         </div>
